@@ -25,13 +25,14 @@ type defaultInvoke struct {
 	//rep *InnerMessage
 }
 
-func (me *defaultInvoke) initGrpc() {
+func (me *defaultInvoke) initGrpc(target string, opts ...grpc.DialOption) error {
 	var err error
-	me.cc, err = grpc.Dial("172.30.30.46:31083", grpc.WithInsecure())
+	me.cc, err = grpc.Dial(target, opts...)
 	if err != nil {
 		fmt.Println("grpc connect failed:", err.Error())
-		return
+		return err
 	}
+	return nil
 }
 
 func (me *defaultInvoke) loadProto(loadder ProtoSourceIf) error {
@@ -55,7 +56,7 @@ func (me *defaultInvoke) protoMarshal() ([]byte, error) {
 
 //service = package.servicename
 func (me *defaultInvoke) call(filename, service, method string,
-	req map[string]interface{}, rep *map[string]interface{}, ctx context.Context) error {
+	req map[string]interface{}, rep *map[string]interface{}, ctx context.Context, opts ...grpc.CallOption) error {
 	//me.l.show()
 	md := me.l.getservicehandler(filename, service, method)
 	ms := me.l.getmessage(filename, md.GetInputType().GetName())
@@ -75,7 +76,7 @@ func (me *defaultInvoke) call(filename, service, method string,
 		return errors.New("grpc conn nil")
 	}
 	stub := grpcdynamic.NewStub(me.cc)
-	resp, err := stub.InvokeRpc(context.Background(), md, ms)
+	resp, err := stub.InvokeRpc(ctx, md, ms, opts...)
 	if err != nil {
 		return err
 	}

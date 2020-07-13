@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/dynamic"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -49,11 +50,12 @@ type ProtoSourceIf interface {
 }
 
 type GrpcInvokeIf interface {
+	initGrpc(target string, opts ...grpc.DialOption) error //初始化连接
 	loadProto(ProtoSourceIf) error
 	parseProto() error
 	fillData() error
 	protoMarshal() ([]byte, error)
-	call(filename, service, method string, req map[string]interface{}, rep *map[string]interface{}, ctx context.Context) error
+	call(filename, service, method string, req map[string]interface{}, rep *map[string]interface{}, ctx context.Context, opts ...grpc.CallOption) error
 }
 
 type GrpcInvokeEngine struct {
@@ -61,26 +63,9 @@ type GrpcInvokeEngine struct {
 	defaultInvoke
 }
 
-func (me *GrpcInvokeEngine) Parse() error {
-	me.initGrpc()
-
-	if err := me.loadProto(me.l); err != nil {
-		return err
-	}
-	if err := me.parseProto(); err != nil {
-		return err
-	}
-
-	if err := me.fillData(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (me *GrpcInvokeEngine) Call(filename, servicename, methodname string,
-	req map[string]interface{}, rep *map[string]interface{}, ctx context.Context) error {
-	if err := me.call(filename, servicename, methodname, req, rep, ctx);
+	req map[string]interface{}, rep *map[string]interface{}, ctx context.Context, opts ...grpc.CallOption) error {
+	if err := me.call(filename, servicename, methodname, req, rep, ctx, opts...);
 		err != nil {
 		return err
 	}
@@ -91,8 +76,21 @@ func (me *GrpcInvokeEngine) SetKeyVal(filename, methodname, key string, value in
 	me.l.kv(filename, methodname, key, value)
 }
 
-func NewGrpcInvoke(loadder ProtoSourceIf) *GrpcInvokeEngine {
-	return &GrpcInvokeEngine{
+func NewGrpcInvoke(loadder ProtoSourceIf, target string, opts ...grpc.DialOption) *GrpcInvokeEngine {
+	app := &GrpcInvokeEngine{
 		l: loadder,
 	}
+	if err := app.initGrpc(target, opts...); err != nil {
+		return nil
+	}
+	if err := app.loadProto(app.l); err != nil {
+		return nil
+	}
+	if err := app.parseProto(); err != nil {
+		return nil
+	}
+	if err := app.fillData(); err != nil {
+		return nil
+	}
+	return app
 }

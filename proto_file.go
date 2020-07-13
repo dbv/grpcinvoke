@@ -74,6 +74,7 @@ func (p *ProtoFile) AddProto(name, path string) {
 	p.pm[name] = path
 }
 
+
 func (p *ProtoFile) load() error {
 	p.rwmtx.RLock()
 	defer p.rwmtx.RUnlock()
