@@ -27,7 +27,7 @@ func runGprcServer() error {
 	pb.RegisterHelloServer(s, &serverHello{})
 	reflection.Register(s)
 	// 将监听交给gRPC服务处理
-	lis, err := net.Listen("tcp", ":8888") //监听所有网卡8028端口的TCP连接
+	lis, err := net.Listen("tcp", ":8888") //监听所有网卡8888端口的TCP连接
 	if err != nil {
 		log.Fatalf("监听失败: %v", err)
 		return err
