@@ -37,7 +37,8 @@ func (p *ProtoFile) ImportProtoWithList(filepaths map[string]string) {
 func (p *ProtoFile) getservicehandler(filename, service, method string) *desc.MethodDescriptor {
 	if fd, existfd := p.fd[filename]; existfd {
 		for _, s := range fd.GetServices() {
-			//fmt.Printf("servicename: %s pkgname:%s\n  input:%s", s.GetName(), s.GetFile().GetPackage(), service)
+			//tmpStr:=s.GetFile().GetPackage()+"."+s.GetName()
+			//fmt.Printf("===tmpStr:%s input:%s\n", tmpStr, service)
 			if service == s.GetFile().GetPackage()+"."+s.GetName() {
 				//fmt.Println("#########find md")
 				return s.FindMethodByName(method)
